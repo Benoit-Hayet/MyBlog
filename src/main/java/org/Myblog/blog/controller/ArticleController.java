@@ -17,6 +17,15 @@ public class ArticleController {
     @Autowired
     private ArticleRepository articleRepository;
 
+    @GetMapping("/title/{title}")
+    public ResponseEntity<List<Article>> getArticlesByTitle(@PathVariable String title) {
+        List<Article> articles = articleRepository.findByTitle(title);
+        if (articles.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.ok(articles);
+    }
+
     @GetMapping
     public ResponseEntity<List<Article>> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
