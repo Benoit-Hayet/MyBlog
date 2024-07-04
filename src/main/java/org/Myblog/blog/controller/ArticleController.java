@@ -1,7 +1,9 @@
 package org.Myblog.blog.controller;
 
 import org.Myblog.blog.model.Article;
+import org.Myblog.blog.model.Category;
 import org.Myblog.blog.repository.ArticleRepository;
+import org.Myblog.blog.repository.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/articles")
@@ -16,6 +19,10 @@ public class ArticleController {
 
     @Autowired
     private ArticleRepository articleRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
 
     @GetMapping("/title/{title}")
     public ResponseEntity<List<Article>> getArticlesByTitle(@PathVariable String title) {
@@ -71,6 +78,17 @@ public class ArticleController {
     public ResponseEntity<Article> createArticle(@RequestBody Article article) {
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
+
+        // Ajout de la catégorie
+        if (article.getCategory() != null) {
+            Optional<Category> optionalCategory = categoryRepository.findById(article.getCategory().getId());
+            if (optionalCategory.isPresent()) {
+                return ResponseEntity.badRequest().body(null); // Retourne une réponse 400 Bad Request si la catégorie n'est pas trouvée
+            }
+            Category category = optionalCategory.get();
+            article.setCategory(category);
+        }
+
         Article savedArticle = articleRepository.save(article);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
     }
@@ -80,13 +98,23 @@ public class ArticleController {
         Article article = articleRepository.findById(id).orElse(null);
         if (article == null) {
             return ResponseEntity.notFound().build();
-        } else {
-            article.setTitle(articleDetails.getTitle());
-            article.setContent(articleDetails.getContent());
-            article.setUpdatedAt(LocalDateTime.now());
-            Article updatedArticle = articleRepository.save(article);
-            return ResponseEntity.ok(updatedArticle);
         }
+
+        article.setTitle(articleDetails.getTitle());
+        article.setContent(articleDetails.getContent());
+        article.setUpdatedAt(LocalDateTime.now());
+
+        // Mise à jour de la catégorie
+        if (articleDetails.getCategory() != null) {
+            Category category = categoryRepository.findById(articleDetails.getCategory().getId()).orElse(null);
+            if (category == null) {
+                return ResponseEntity.badRequest().body(null); // Retourne une réponse 400 Bad Request si la catégorie n'est pas trouvée
+            }
+            article.setCategory(category);
+        }
+
+        Article updatedArticle = articleRepository.save(article);
+        return ResponseEntity.ok(updatedArticle);
     }
 
     @DeleteMapping("/{id}")

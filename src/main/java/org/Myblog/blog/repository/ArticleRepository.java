@@ -1,6 +1,7 @@
 package org.Myblog.blog.repository;
 
 import org.Myblog.blog.model.Article;
+import org.Myblog.blog.model.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -12,4 +13,5 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     List<Article> findByCreatedAt(LocalDateTime createdAt);
     List<Article> findByCreatedAtAfter(LocalDateTime createdAt);
     List<Article> findTop5ByOrderByCreatedAtDesc();
+
 }
